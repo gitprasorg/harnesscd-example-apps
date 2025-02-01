@@ -1,0 +1,86 @@
+template:
+  name: basic-ci-cd
+  type: Pipeline
+  projectIdentifier: gitprasorgproject
+  orgIdentifier: default
+  spec:
+    properties:
+      ci:
+        codebase:
+          connectorRef: gitonector
+          build: <+input>
+    stages:
+      - stage:
+          name: step1-build
+          identifier: step1build
+          description: ""
+          type: CI
+          spec:
+            cloneCodebase: true
+            caching:
+              enabled: true
+            buildIntelligence:
+              enabled: true
+            infrastructure:
+              type: KubernetesDirect
+              spec:
+                connectorRef: cerebrumk8sconnector
+                namespace: default
+                automountServiceAccountToken: true
+                nodeSelector: {}
+                os: Linux
+            execution:
+              steps:
+                - step:
+                    type: BuildAndPushDockerRegistry
+                    name: snakeoil-dockerbuild
+                    identifier: snakeoildockerbuild
+                    spec:
+                      connectorRef: account.harnessImage
+                      repo: snakeoil4harness
+                      tags:
+                        - dummy
+                      caching: true
+      - stage:
+          name: k8s-local-deploy
+          identifier: k8slocal
+          description: ""
+          type: Deployment
+          spec:
+            deploymentType: Kubernetes
+            service:
+              serviceRef: k8sservicegitub
+              gitBranch: so-build-1
+            environment:
+              environmentRef: dev
+              gitBranch: so-build-1
+              deployToAll: false
+              infrastructureDefinitions:
+                - identifier: myinfracerebrum
+            execution:
+              steps:
+                - step:
+                    name: Rollout Deployment
+                    identifier: rolloutDeployment
+                    type: K8sRollingDeploy
+                    timeout: 10m
+                    spec:
+                      skipDryRun: false
+                      pruningEnabled: false
+              rollbackSteps:
+                - step:
+                    name: Rollback Rollout Deployment
+                    identifier: rollbackRolloutDeployment
+                    type: K8sRollingRollback
+                    timeout: 10m
+                    spec:
+                      pruningEnabled: false
+          tags: {}
+          failureStrategies:
+            - onFailure:
+                errors:
+                  - AllErrors
+                action:
+                  type: StageRollback
+  identifier: basiccicd
+  versionLabel: basic
