@@ -1,0 +1,43 @@
+pipeline:
+  name: snake-oil
+  identifier: snakeoil
+  projectIdentifier: gitprasorgproject
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: gitonector
+        build: <+input>
+  stages:
+    - stage:
+        name: step1-build
+        identifier: step1build
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+          buildIntelligence:
+            enabled: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: cerebrumk8sconnector
+              namespace: default
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: snakeoil-dockerbuild
+                  identifier: snakeoildockerbuild
+                  spec:
+                    connectorRef: account.harnessImage
+                    repo: snakeoil4harness
+                    tags:
+                      - dummy
+                    caching: true
