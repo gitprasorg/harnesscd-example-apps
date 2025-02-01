@@ -1,0 +1,13 @@
+infrastructureDefinition:
+  name: myinfra-cerebrum
+  identifier: myinfracerebrum
+  orgIdentifier: default
+  projectIdentifier: gitprasorgproject
+  environmentRef: dev
+  deploymentType: Kubernetes
+  type: KubernetesDirect
+  spec:
+    connectorRef: cerebrumk8sconnector
+    namespace: default
+    releaseName: release-<+INFRA_KEY_SHORT_ID>
+  allowSimultaneousDeployments: true
